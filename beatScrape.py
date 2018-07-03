@@ -6,8 +6,14 @@ def BeatHeadlineArtistScrape(headlineArtistLink):
     #scrape headlinining artists
     page = request.urlopen(headlineArtistLink)
     soup = BeautifulSoup(page, "html5lib")
+    all_links = soup.find_all("a")
+    try:
+        artistName = [x for x in all_links if x.get("href") != None and x.get("href") in headlineArtistLink and not x.get("href") in ["/"] and x.text != None][0].text
+    except:
+        artistName = None
+        print("Could not parse artist name")
     return({
-        "artistName":soup.find('h2', {"class":"node-title"}).text
+        "artistName":artistName
     })
 
 
