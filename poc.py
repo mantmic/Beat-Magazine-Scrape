@@ -1,4 +1,5 @@
 import importlib
+from geopy.geocoders import Nominatim
 
 bandcampScrape = importlib.import_module("bandcampScrape")
 beatScrape = importlib.import_module("beatScrape")
@@ -16,6 +17,7 @@ allSupportArtist=[]
 allVenue=[]
 
 for i in range(len(gigGuideGigs)):
+#for i in range(1):
     gig_link = gigGuideGigs[i].get("gigLink")
     print(gig_link)
     gigDetails = beatScrape.BeatGigScrape(beat_url + gig_link)
@@ -64,6 +66,41 @@ for i in range(len(allHeadlineArtist)):
     })
 
 #loop through support artists
-gigVenue = gigDetails.get("gigVenue")
+supportArtistPayload = []
+for i in range(len(allSupportArtist)):
+#for i in range(50,60):
+    artistLink = beat_url + allSupportArtist[i]
+    print(artistLink)
+    beatArtist = beatScrape.BeatHeadlineArtistScrape(artistLink)
+    bandcampArtist = bandcampScrape.BandcampBandSearch(beatArtist.get("artistName"))
+    #append this new artist to the total payload
+    supportArtistPayload.append({
+        "source":"beat-support",
+        "sourceId":allSupportArtist[i],
+        "artistName":beatArtist.get("artistName"),
+        "links":[
+            {
+                "linkSource":"bandcamp",
+                "linkUrl":bandcampArtist.get("bandcampLink"),
+                "linkAttributes":{
+                    "bandcampTracks":bandcampArtist.get("bandcampTracks")
+                }
+            }
+        ]
+    })
 
-venueDetails = beatScrape.BeatVenueScrape(beat_url + gigVenue)
+#loop through venues
+venuePayload = []
+geolocator = Nominatim()
+for i in range(len(allVenue)):
+    venueUrl=beat_url + allVenue[i]
+    venueDetails = beatScrape.BeatVenueScrape(venueUrl)
+    venueLocation = geolocator.geocode(venueDetails.get("venueAddress"))
+    venuePayload.append({
+        "source":"beat",
+        "sourceId":allVenue[i],
+        "venueName":venueDetails.get("venueName"),
+        "venueAddress":venueDetails.get("venueAddress"),
+        "lat":venueLocation.latitude,
+        "lon":venueLocation.longitude
+    })

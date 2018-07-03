@@ -15,16 +15,17 @@ The end goal is to improve the user experience of finding a gig by;
 
 These python functions pull the data required to achieve this.
 
-## Dependencies ## 
+## Dependencies ##
 
 Python packages
-* urllib 
-* bs4 
+* urllib
+* bs4
 * re (usually installed by default)
-* fuzzywuzzy 
-* dateutil 
+* fuzzywuzzy
+* dateutil
 * importlib (for importing functions from each file)
+* geopy
 
 ```bash
-pip3 install urllib bs4 fuzzywuzzy dateutil importlib
+pip3 install urllib bs4 fuzzywuzzy dateutil importlib geopy
 ```
