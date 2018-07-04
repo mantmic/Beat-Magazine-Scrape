@@ -92,6 +92,11 @@ def BeatVenueScrape(venueUrl):
         		venueAddress = field_labels[i].findNext('h5').text
         		if venueAddress != None:
         			break
+    #sometimes people put CBD in the address when that's not nessisary
+    try:
+        venueAddress = venueAddress.replace(" CBD ", " ")
+    except:
+        print("Venue address error")
     return({
         "venueName":venueName,
         "venueAddress":venueAddress

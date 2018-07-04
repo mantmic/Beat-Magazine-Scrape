@@ -11,7 +11,7 @@ beat_url = "http://www.beat.com.au/"
 
 #scrape between a date range
 start_date = datetime.datetime.now().date()
-end_date = start_date + datetime.timedelta(1)
+end_date = start_date + datetime.timedelta(28)
 
 delta = end_date - start_date
 
@@ -52,6 +52,9 @@ allHeadlineArtist = list(set(allHeadlineArtist))
 allSupportArtist = list(set(allSupportArtist))
 allVenue = list(set(allVenue))
 
+allHeadlineArtist = [x for x in allHeadlineArtist if x is not None]
+allSupportArtist = [x for x in allSupportArtist if x is not None]
+allVenue = [x for x in allVenue if x is not None]
 #perhaps should check which of these are new before scraping??
 
 #maybe not, could be a chance to update reference information
@@ -124,15 +127,25 @@ venuePayload = []
 geolocator = Nominatim()
 for i in range(len(allVenue)):
     venueUrl=beat_url + allVenue[i]
+    print(venueUrl)
     venueDetails = beatScrape.BeatVenueScrape(venueUrl)
+    #try to use venueLocation
+    #otherwise try to use google
     venueLocation = geolocator.geocode(venueDetails.get("venueAddress"))
+    try:
+        lat = venueLocation.latitude
+        lon = venueLocation.longitude
+    except:
+        print("Venue scrape - cannot find coordinates")
+        lat = None
+        lon = None
     venuePayload.append({
         "source":"beat",
         "sourceId":allVenue[i],
         "venueName":venueDetails.get("venueName"),
         "venueAddress":venueDetails.get("venueAddress"),
-        "lat":venueLocation.latitude,
-        "lon":venueLocation.longitude
+        "lat":lat,
+        "lon":lon
     })
 
 with open('venuePayload.json', 'w') as outfile:
