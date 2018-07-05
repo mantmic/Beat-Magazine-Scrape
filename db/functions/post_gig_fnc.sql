@@ -9,6 +9,7 @@ drop function if exists beat.post_gig_fnc (
 )
 ;
 
+--need to fix bug where can't update date of gig
 create or replace function beat.post_gig_fnc ( 
 	  p_gig_id 			varchar(200)
 	, p_gig_genre 		varchar(100)
@@ -94,7 +95,7 @@ $$
 		)
 		on conflict on constraint gig_pk do --when there already are gigs on this date 
 		update set 
-			gig.gig_details = jsonb_set(gig.gig_details::jsonb - p_gig_id , ('{' || p_gig_id || '}')::text[] , (excluded.gig_details -> p_gig_id)::jsonb , true)
+			gig_details = jsonb_set(gig.gig_details::jsonb - p_gig_id , ('{' || p_gig_id || '}')::text[] , (excluded.gig_details -> p_gig_id)::jsonb , true)
 		;
 	end ;
 $$ 
