@@ -4,11 +4,10 @@ select
 	  gig_date
 	, gig_id
 	, to_timestamp ( gig_details -> gig_id ->> 'gigDatetime', 'YYYY-MM-DD"T"HH24:MI:SS' ) as gig_datetime
-	, gig_details -> gig_id ->> 'gigDatetime'
-	, gig_details -> gig_id ->> 'venueId' 			as venue_id
-	, gig_details -> gig_id ->> 'gigGenre' 			as gig_genre
-	, gig_details -> gig_id ->> 'headlineArtist' 	as headline_artist
-	, gig_details -> gig_id ->> 'supportArtist' 	as support_artist
+	, gig_details -> gig_id ->> 'venueId' 								as venue_id
+	, gig_details -> gig_id ->> 'gigGenre' 								as gig_genre
+	, gig_details -> gig_id -> 'headlineArtist' 						as headline_artist 
+	, gig_details -> gig_id -> 'supportArtist'							as support_artist
 from 
 	( select 
 		  g.gig_date 

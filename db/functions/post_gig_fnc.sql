@@ -21,22 +21,26 @@ create or replace function beat.post_gig_fnc (
 $$ 
 	declare 
 		v_existing_gig 		json ; 
+		v_existing_date 	date ;
+		v_existing_artist 	json ;
 	 	v_remove_artists	varchar(200)[] ; --artists that had this gig that are now not part of the gig
 	 	v_new_artists 		varchar(200)[] ; --artists that previously didn't have this gig that now should have this gig
 	begin 
 		select 
-			gig_details -> p_gig_id
-		from 	
-			beat.gig g 
-		where 
-			g.gig_date = date_trunc ( 'day', p_gig_datetime )
-		into
-			v_existing_gig
+			  gv.gig_date
+			, gv.headline_artist::jsonb || gv.support_artist::jsonb
+		from 
+			beat.gig_vw gv
+		where
+			gig_id = p_gig_id 
+		into 
+			  v_existing_date
+			, v_existing_artist
 		;
 		--determine new bands as part of the gig
 		select 
-		 	  array_agg ( new_artist ) filter ( where new_artist is not null ) 
-		 	, array_agg ( remove_artist ) filter ( where remove_artist is not null ) 
+		 	  array_agg ( new_artist ) 		filter ( where new_artist is not null ) 
+		 	, array_agg ( remove_artist ) 	filter ( where remove_artist is not null ) 
 		from 
 			( select 
 				  case when ea.existing_artist is null then ia.input_artist
@@ -51,7 +55,7 @@ $$
 				) ia 
 				full outer join 
 				( select 
-					( json_array_elements ( v_existing_gig -> 'headlineArtist' )#>>'{}' )::varchar(200)  as existing_artist 
+					json_array_elements ( v_existing_artist )::varchar(200) as existing_artist 
 				) ea
 					on ia.input_artist = ea.existing_artist
 			) q
@@ -76,6 +80,14 @@ $$
 		where
 			artist_id = any ( v_new_artists )
 		;
+		--remove the existing object
+		update 
+			beat.gig 
+		set 
+			gig_details = gig_details::jsonb - p_gig_id
+		where 
+			gig_date = v_existing_date
+		;
 		--insert the new gig
 		insert into beat.gig ( 
 			  gig_date 		
@@ -95,7 +107,7 @@ $$
 		)
 		on conflict on constraint gig_pk do --when there already are gigs on this date 
 		update set 
-			gig_details = jsonb_set(gig.gig_details::jsonb - p_gig_id , ('{' || p_gig_id || '}')::text[] , (excluded.gig_details -> p_gig_id)::jsonb , true)
+			gig_details = jsonb_set(gig.gig_details::jsonb, ('{' || p_gig_id || '}')::text[] , (excluded.gig_details -> p_gig_id)::jsonb , true)
 		;
 	end ;
 $$ 
