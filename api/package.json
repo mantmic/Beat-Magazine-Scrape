@@ -1,0 +1,26 @@
+{
+  "name": "beat-magazine-api",
+  "version": "1.0.0",
+  "description": "API for pushing and pulling beat data from the database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mantmic/Beat-Magazine-Scrape.git/api"
+  },
+  "author": "mantmic",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mantmic/Beat-Magazine-Scrape/issues"
+  },
+  "homepage": "https://github.com/mantmic/Beat-Magazine-Scrape#readme",
+  "devDependencies": {
+    "nodemon": "^1.17.5"
+  },
+  "dependencies": {
+    "express": "^4.16.3"
+  }
+}

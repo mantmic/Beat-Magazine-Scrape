@@ -32,3 +32,23 @@ These python functions pull the data required to achieve this.
 ```bash
 pip3 install urllib bs4 fuzzywuzzy dateutil importlib geopy
 ```
+
+### DB ###
+Simple storage for gig data.
+
+Due to Heroku's 10,000 record limit the schema is a little strange. Gigs are stored as one record per day with a large JSON array containing all the gigs that day. The table can be accessed like a normal relational table using the view, beat.gig_vw.
+
+#### Dependencies ####
+* Postgres 9.5 +
+
+
+### API ###
+NodeJS API used for acccessing Postgres database. Operations that post data require an API key. Read operations are open to all.
+
+#### Dependencies ####
+
+
+### Frontend ###
+
+
+#### Dependencies ####
