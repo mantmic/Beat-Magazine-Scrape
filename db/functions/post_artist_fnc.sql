@@ -31,6 +31,7 @@ $$
 			  beat_type 	= excluded.beat_type
 			, artist_name 	= excluded.artist_name
 			, artist_links 	= excluded.artist_links
+			, last_updated_ts = current_timestamp 
 		;
 	end ;
 $$ language plpgsql 

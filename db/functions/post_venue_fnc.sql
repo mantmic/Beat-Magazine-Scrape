@@ -36,6 +36,7 @@ $$
 			, venue_address = excluded.venue_address
 			, lat 			= excluded.lat
 			, lon 			= excluded.lon
+			, last_updated_ts = current_timestamp 
 		;
 	end ;
 $$ language plpgsql 

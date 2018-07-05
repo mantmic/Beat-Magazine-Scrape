@@ -1,5 +1,4 @@
-select 
-	beat.post_artist_fnc ( 
+select beat.post_artist_fnc ( 
 	  p_artist_id 		:= 'band01'
 	, p_beat_type 		:= 'headline'
 	, p_artist_name 	:= 'The first band'
@@ -63,8 +62,36 @@ select beat.post_gig_fnc (
 )
 ;
 
+--api query for gigs
 select
-	*
+	gig_id 			as "gigId",
+	gig_datetime 	as "gigDatetime",
+	venue_id 		as "venueId",
+	gig_genre 		as "gigGenre",
+	headline_artist as "headlineArtist",
+	support_artist 	as "supportArtist"
 from 
 	beat.gig_vw
+;
+
+--api query for artists 
+select 
+	artist_id 		as "artistId",
+	beat_type 		as "beatAristType",
+	artist_name 	as "artistName",
+	artist_links 	as "artistLinks",
+	artist_gigs 	as "artistGigs"
+from 
+	beat.artist 
+;
+
+--api query for venues 
+select 
+	venue_id 		as "venueId",
+	venue_name 		as "venueName",
+	venue_address 	as "venueAddress",
+	lat,
+	lon
+from 
+	beat.venue
 ;

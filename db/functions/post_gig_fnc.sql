@@ -107,7 +107,8 @@ $$
 		)
 		on conflict on constraint gig_pk do --when there already are gigs on this date 
 		update set 
-			gig_details = jsonb_set(gig.gig_details::jsonb, ('{' || p_gig_id || '}')::text[] , (excluded.gig_details -> p_gig_id)::jsonb , true)
+			  gig_details = jsonb_set(gig.gig_details::jsonb, ('{' || p_gig_id || '}')::text[] , (excluded.gig_details -> p_gig_id)::jsonb , true)
+			, last_updated_ts = current_timestamp 
 		;
 	end ;
 $$ 

@@ -17,8 +17,10 @@ create table beat.gig (
 */
 
 create table beat.gig ( 
-	  gig_date 		date 
-	, gig_details 	json --this will store the information in the fake table above
+	  gig_date 			date 
+	, gig_details 		json --this will store the information in the fake table above
+	, insert_ts 		timestamptz default current_timestamp 
+	, last_updated_ts 	timestamptz default current_timestamp 
 	, constraint gig_pk primary key ( gig_date ) 
 )
 ;
@@ -26,11 +28,13 @@ create table beat.gig (
 
 --table to store venues
 create table beat.venue ( 
-	  venue_id 		varchar(200)
-	, venue_name	varchar(200)
-	, venue_address varchar(200)
-	, lat 			float 
-	, lon 			float 
+	  venue_id 			varchar(200)
+	, venue_name		varchar(200)
+	, venue_address		varchar(200)
+	, lat 				float 
+	, lon 				float 
+	, insert_ts 		timestamptz default current_timestamp 
+	, last_updated_ts 	timestamptz default current_timestamp 
 	, constraint venue_pk primary key ( venue_id ) 
 )
 ;
@@ -42,6 +46,8 @@ create table beat.artist (
 	, artist_name 	varchar(200)
 	, artist_links 	json
 	, artist_gigs 	varchar(200)[] 	default array[]::varchar(200)[]	--store an array of gigs this artist is part of, this will make going from artist to gig much much quicker
+	, insert_ts 		timestamptz default current_timestamp 
+	, last_updated_ts 	timestamptz default current_timestamp 
 	, constraint artist_pk primary key ( artist_id ) 
 )
 ;
