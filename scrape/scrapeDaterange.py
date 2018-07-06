@@ -11,7 +11,7 @@ beat_url = "http://www.beat.com.au/"
 
 #scrape between a date range
 start_date = datetime.datetime.now().date()
-end_date = start_date + datetime.timedelta(28)
+end_date = start_date + datetime.timedelta(0)
 
 delta = end_date - start_date
 
@@ -21,7 +21,7 @@ allHeadlineArtist = []
 allSupportArtist=[]
 allVenue=[]
 
-for j in range(delta.days):
+for j in range(delta.days + 1):
     this_date = start_date + datetime.timedelta(j)
     this_link = beat_url + "gig-guide/" + this_date.strftime("%Y-%m-%d")
     print(this_link)
@@ -44,7 +44,7 @@ for j in range(delta.days):
         allVenue.append(gigDetails.get("gigVenue"))
     allGigs.extend(gigGuideGigs)
 
-with open('gigData.json', 'w') as outfile:
+with open('exampleData/gigData.json', 'w') as outfile:
     json.dump(allGigs, outfile)
 
 #reduce the all lists to unique values
@@ -88,7 +88,7 @@ for i in range(len(allHeadlineArtist)):
         ]
     })
 
-with open('headlineArtistPayload.json', 'w') as outfile:
+with open('exampleData/headlineArtistPayload.json', 'w') as outfile:
     json.dump(headlineArtistPayload, outfile)
 
 #loop through support artists
@@ -119,7 +119,7 @@ for i in range(len(allSupportArtist)):
         ]
     })
 
-with open('supportArtistPayload.json', 'w') as outfile:
+with open('exampleData/supportArtistPayload.json', 'w') as outfile:
     json.dump(supportArtistPayload, outfile)
 
 #loop through venues
@@ -148,5 +148,5 @@ for i in range(len(allVenue)):
         "lon":lon
     })
 
-with open('venuePayload.json', 'w') as outfile:
+with open('exampleData/venuePayload.json', 'w') as outfile:
     json.dump(venuePayload, outfile)

@@ -72,7 +72,8 @@ function getGig(req,res,next){
 	venue_id 		as "venueId", \
 	gig_genre 		as "gigGenre", \
 	headline_artist as "headlineArtist", \
-	support_artist 	as "supportArtist" \
+	support_artist 	as "supportArtist", \
+	gig_price		as "gigPrice" \
 from \
 	beat.gig_vw \
 where gig_date between $1 and $2 or gig_id = any($3)', [req.params.startDate || '1970-01-01', req.params.endDate || '2199-12-31', req.body.gigId || []])

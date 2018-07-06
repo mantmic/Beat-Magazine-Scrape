@@ -8,6 +8,7 @@ select
 	, gig_details -> gig_id ->> 'gigGenre' 								as gig_genre
 	, gig_details -> gig_id -> 'headlineArtist' 						as headline_artist 
 	, gig_details -> gig_id -> 'supportArtist'							as support_artist
+	, gig_details -> gig_id ->> 'gigPrice'::float 						as gig_price
 from 
 	( select 
 		  g.gig_date 

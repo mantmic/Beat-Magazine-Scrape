@@ -17,6 +17,7 @@ create or replace function beat.post_gig_fnc (
 	, p_venue_id 		varchar(200)
 	, p_headline_artist varchar(200)[]
 	, p_support_artist 	varchar(200)[]
+	, p_gig_price 		float
 ) returns void as 
 $$ 
 	declare 
@@ -101,7 +102,8 @@ $$
 					'headlineArtist',p_headline_artist,
 					'supportArtist',p_support_artist,
 					'gigDatetime',p_gig_datetime,
-					'venueId',p_venue_id
+					'venueId',p_venue_id,
+					'gigPrice',p_gig_price
 			  	 )
 			 )
 		)
