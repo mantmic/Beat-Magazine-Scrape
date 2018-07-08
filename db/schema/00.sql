@@ -41,13 +41,8 @@ create table beat.venue (
 
 --table to store both headline and support artists
 create table beat.artist ( 
-	  artist_id 	varchar(200)
-	, beat_type 	varchar(50) 	--either headline or support
-	, artist_name 	varchar(200)
-	, artist_links 	json
-	, artist_gigs 	varchar(200)[] 	default array[]::varchar(200)[]	--store an array of gigs this artist is part of, this will make going from artist to gig much much quicker
-	, insert_ts 		timestamptz default current_timestamp 
-	, last_updated_ts 	timestamptz default current_timestamp 
-	, constraint artist_pk primary key ( artist_id ) 
+	  artist_idx 		int
+	, artist_object  	json
+	, constraint artist_pk primary key ( artist_idx ) 
 )
 ;

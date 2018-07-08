@@ -49,6 +49,7 @@ select beat.post_gig_fnc (
 	, p_venue_id 		:= 'venue01'
 	, p_headline_artist := array['band01']
 	, p_support_artist 	:= array['band02']
+	, p_gig_price 		:= 10 
 )
 ;
 
@@ -59,6 +60,7 @@ select beat.post_gig_fnc (
 	, p_venue_id 		:= 'venue01'
 	, p_headline_artist := array['band02']
 	, p_support_artist 	:= array['band03', 'band04']
+	, p_gig_price 		:= 10 
 )
 ;
 
@@ -95,3 +97,37 @@ select
 from 
 	beat.venue
 ;
+
+
+--function to get the artist idx for a given artist id
+create or replace function beat.get_artist_idx_fnc ( p_artist_id text ) returns int as 
+$$
+	select ascii ( lower ( ( substring ( ( string_to_array ( p_artist_id, '/' ) )[array_length(string_to_array ( p_artist_id, '/' ),1 ) ],1,1 ) ) ) )
+$$ language sql 
+;
+
+
+select 
+	 beat.get_artist_idx_fnc(artist_id) as artist_idx 
+from 
+	beat.artist_backup
+;
+
+delete from beat.artist ;
+
+select 
+	beat.post_artist_fnc ( 
+	  p_artist_id 		:= artist_id
+	, p_beat_type 		:= beat_type 
+	, p_artist_name 	:= artist_name
+	, p_artist_links 	:= artist_links
+) 
+from 
+	beat.artist_backup 
+;
+
+select * from beat.test_tmp ;
+
+select * from beat.get_artist_fnc ( array['/category/gig-support/fenn-wilson']) ;
+select beat.push_artist_gig_fnc ( '/category/gig-support/fenn-wilson', '/gig/flying-dutchman-6' ) ;
+

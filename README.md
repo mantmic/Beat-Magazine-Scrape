@@ -32,6 +32,11 @@ These python functions pull the data required to achieve this.
 ```bash
 pip3 install urllib bs4 fuzzywuzzy dateutil importlib geopy
 ```
+#### To do ####
+* Improve address search function
+* Find soundcloud song links
+* Find spotify song links
+* Improve parsing for beat gig datetimes to cater for all day gigs
 
 ### DB ###
 Simple storage for gig data.

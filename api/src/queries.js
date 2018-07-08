@@ -7,12 +7,12 @@ var options = {
 };
 
 var pgp = require('pg-promise')(options);
-
+pgp.pg.defaults.ssl = true;
 //load the db connection string from the config file
 dbConnection = pgp(config["dbConnection"])
 
 //post parameters = req.body.[param]
-//get parameters = req.params.[param]
+//get parameters = req.query.[param]
 
 //function to get artists
 function getArtist(req,res,next){
@@ -23,8 +23,7 @@ function getArtist(req,res,next){
 	artist_links 	as "artistLinks", \
 	artist_gigs 	as "artistGigs" \
 from  \
-	beat.artist  \
-where artist_id = any($1)', req.body.artistId || [])
+	beat.get_artist_fnc ( $1 )', req.body.artistId || [])
     .then(function(data){
       res.status(200)
         .json({
@@ -76,7 +75,7 @@ function getGig(req,res,next){
 	gig_price		as "gigPrice" \
 from \
 	beat.gig_vw \
-where gig_date between $1 and $2 or gig_id = any($3)', [req.params.startDate || '1970-01-01', req.params.endDate || '2199-12-31', req.body.gigId || []])
+where gig_date between $1 and $2 or gig_id = any($3)', [req.query.startDate || '1970-01-01', req.query.endDate || '2199-12-31', req.body.gigId || []])
     .then(function(data){
       res.status(200)
         .json({
@@ -93,18 +92,62 @@ where gig_date between $1 and $2 or gig_id = any($3)', [req.params.startDate || 
 
 //function to push artists
 function pushArtist(req,res,next){
-  dbConnection.any('select beat.post_artist_fnc ( \
+  dbConnection.any("select beat.post_artist_fnc ( \
 	  p_artist_id 		:= $1 \
 	, p_beat_type 		:= $2 \
 	, p_artist_name 	:= $3 \
-	, p_artist_links 	:= $4 )'
-	, [req.params.artistId, req.body.beatArtistType, req.body.artistName, req.body.artistLinks])
+	, p_artist_links 	:= $4 ) as result", [req.params.artistId, req.body.beatArtistType, req.body.artistName, req.body.artistLinks])
     .then(function(data){
       res.status(200)
         .json({
           status:"success",
-          data:data,
           message:"Pushed artist"
+        });
+    })
+    .catch(function(err){
+      return next(err);
+    });
+}
+;
+
+//function to push venues
+function pushVenue(req,res,next){
+  dbConnection.any("select beat.post_venue_fnc ( \
+	  p_venue_id := $1 \
+	, p_venue_name := $2 \
+	, p_venue_address := $3 \
+	, p_lat := $4 \
+	, p_lon := $5 \
+) as result", [req.params.venueId, req.body.venueName, req.body.venueAddress, req.body.lat, req.body.lon])
+    .then(function(data){
+      res.status(200)
+        .json({
+          status:"success",
+          message:"Pushed venue"
+        });
+    })
+    .catch(function(err){
+      return next(err);
+    });
+}
+;
+
+//function to push gigs
+function pushGig(req,res,next){
+  dbConnection.any("select beat.post_gig_fnc ( \
+	  p_gig_id :=  $1 \
+	, p_gig_genre := $2 \
+	, p_gig_datetime	:= $3 \
+	, p_venue_id 	 :=  $4 \
+	, p_headline_artist := $5 \
+	, p_support_artist := $6 \
+	, p_gig_price :=  $7 \
+) as result", [req.params.gigId, req.body.gigGenre, req.body.gigDatetime, req.body.venueId, req.body.headlineArtist, req.body.supportArtist, req.body.gigPrice])
+    .then(function(data){
+      res.status(200)
+        .json({
+          status:"success",
+          message:"Pushed gig"
         });
     })
     .catch(function(err){
@@ -117,6 +160,8 @@ module.exports = {
 	getGig:getGig,
 	getArtist:getArtist,
 	getVenue:getVenue,
-	pushArtist:pushArtist
+	pushArtist:pushArtist,
+  pushVenue:pushVenue,
+  pushGig:pushGig
 }
 ;

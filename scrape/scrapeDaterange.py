@@ -1,17 +1,64 @@
 import importlib
 import datetime
 from geopy.geocoders import Nominatim
-import json
+import requests
+import urllib.parse
+from time import sleep
+
+api_url = 'http://localhost:3000'
+beat_url = "http://www.beat.com.au/"
+n_days = 7
+
+
+def PostPayload(objectId,payload, apiEndpoint):
+    retry_max = 10
+    retry_count = 0
+    request_success = False
+    this_endpoint = api_url + '/' + apiEndpoint + '/push/' + urllib.parse.quote_plus(objectId)
+    while(request_success == False and retry_count < retry_max):
+        try:
+            r = requests.post(this_endpoint, json = payload)
+            request_success = True
+        except:
+            print("Venue scrape - cannot find coordinates")
+            retry_count += 1
+            r = 'Failure'
+            sleep(retry_count)
+    return(r)
+
+def GetAddressLatLon(address):
+    retry_max = 10
+    retry_count = 0
+    request_success = False
+    geolocator = Nominatim()
+    returnObject = {
+        "latitude":None,
+        "longitude":None
+    }
+    while(request_success == False and retry_count < retry_max):
+        try:
+            location = geolocator.geocode(address)
+            request_success = True
+        except:
+            print("Geolocator failed")
+            retry_count += 1
+            sleep(retry_count)
+    if request_success == True:
+        try:
+            returnObject["latitude"] = location.latitude
+            returnObject["longitude"] = location.longitude
+        except:
+            print("No lat lon for address " + address)
+    return(returnObject)
 
 bandcampScrape = importlib.import_module("bandcampScrape")
 beatScrape = importlib.import_module("beatScrape")
 
 #scrape a page of the gig guide to get gig links, gig genres
-beat_url = "http://www.beat.com.au/"
 
 #scrape between a date range
 start_date = datetime.datetime.now().date()
-end_date = start_date + datetime.timedelta(0)
+end_date = start_date + datetime.timedelta(n_days)
 
 delta = end_date - start_date
 
@@ -44,8 +91,6 @@ for j in range(delta.days + 1):
         allVenue.append(gigDetails.get("gigVenue"))
     allGigs.extend(gigGuideGigs)
 
-with open('exampleData/gigData.json', 'w') as outfile:
-    json.dump(allGigs, outfile)
 
 #reduce the all lists to unique values
 allHeadlineArtist = list(set(allHeadlineArtist))
@@ -61,92 +106,104 @@ allVenue = [x for x in allVenue if x is not None]
 #only artists who have gigs get updated then... hmmm..
 
 #loop through the headline artists
-headlineArtistPayload = []
 for i in range(len(allHeadlineArtist)):
 #for i in range(50,60):
-    headlineArtistLink = beat_url + allHeadlineArtist[i]
-    print(headlineArtistLink)
+    artistId = allHeadlineArtist[i]
+    artistLinks = {}
+    headlineArtistLink = beat_url + artistId
+    print(artistId)
     beatArtist = beatScrape.BeatHeadlineArtistScrape(headlineArtistLink)
     try:
         bandcampArtist = bandcampScrape.BandcampBandSearch(beatArtist.get("artistName"))
-    except:
-        bandcampArtist = {}
-        print("Bandcamp scrape failed")
-    #append this new artist to the total payload
-    headlineArtistPayload.append({
-        "source":"beat-headline",
-        "sourceId":allHeadlineArtist[i],
-        "artistName":beatArtist.get("artistName"),
-        "links":[
-            {
-                "linkSource":"bandcamp",
-                "linkUrl":bandcampArtist.get("bandcampLink"),
-                "linkAttributes":{
+        if bandcampArtist.get("bandcampLink") != None:
+            artistLinks["bandcamp"] = {
+                "bandcampPage":bandcampArtist.get("bandcampLink"),
+                "bandcampTracks":{
                     "bandcampTracks":bandcampArtist.get("bandcampTracks")
                 }
             }
-        ]
-    })
+    except:
+        print("Bandcamp scrape failed")
+    try:
+        #append this new artist to the total payload
+        payload = {
+            "beatArtistType":"headline",
+            "artistName":beatArtist.get("artistName"),
+            "artistLinks":artistLinks
+        }
+        r = PostPayload(objectId = artistId,payload = payload, apiEndpoint = "artist")
+    except:
+        print("Artist " + artistId + " post failed")
 
-with open('exampleData/headlineArtistPayload.json', 'w') as outfile:
-    json.dump(headlineArtistPayload, outfile)
 
 #loop through support artists
-supportArtistPayload = []
 for i in range(len(allSupportArtist)):
 #for i in range(50,60):
-    artistLink = beat_url + allSupportArtist[i]
-    print(artistLink)
-    beatArtist = beatScrape.BeatHeadlineArtistScrape(artistLink)
+    artistId = allSupportArtist[i]
+    artistLinks = {}
+    headlineArtistLink = beat_url + artistId
+    print(artistId)
+    beatArtist = beatScrape.BeatHeadlineArtistScrape(headlineArtistLink)
     try:
         bandcampArtist = bandcampScrape.BandcampBandSearch(beatArtist.get("artistName"))
-    except:
-        bandcampArtist = {}
-        print("Bandcamp scrape failed")
-    #append this new artist to the total payload
-    supportArtistPayload.append({
-        "source":"beat-support",
-        "sourceId":allSupportArtist[i],
-        "artistName":beatArtist.get("artistName"),
-        "links":[
-            {
-                "linkSource":"bandcamp",
-                "linkUrl":bandcampArtist.get("bandcampLink"),
-                "linkAttributes":{
+        if bandcampArtist.get("bandcampLink") != None:
+            artistLinks["bandcamp"] = {
+                "bandcampPage":bandcampArtist.get("bandcampLink"),
+                "bandcampTracks":{
                     "bandcampTracks":bandcampArtist.get("bandcampTracks")
                 }
             }
-        ]
-    })
+    except:
+        print("Bandcamp scrape failed")
+    try:
+        #append this new artist to the total payload
+        payload = {
+            "beatArtistType":"headline",
+            "artistName":beatArtist.get("artistName"),
+            "artistLinks":artistLinks
+        }
+        r = PostPayload(objectId = artistId,payload = payload, apiEndpoint = "artist")
+    except:
+        print("Artist " + artistId + " post failed")
 
-with open('exampleData/supportArtistPayload.json', 'w') as outfile:
-    json.dump(supportArtistPayload, outfile)
 
 #loop through venues
-venuePayload = []
-geolocator = Nominatim()
 for i in range(len(allVenue)):
-    venueUrl=beat_url + allVenue[i]
-    print(venueUrl)
+    venueId = allVenue[i]
+    venueUrl=beat_url + venueId
+    print(venueId)
     venueDetails = beatScrape.BeatVenueScrape(venueUrl)
     #try to use venueLocation
     #otherwise try to use google
-    venueLocation = geolocator.geocode(venueDetails.get("venueAddress"))
+    venueLocation = GetAddressLatLon(venueDetails.get("venueAddress"))
+    lat = venueLocation.get("latitude")
+    lon = venueLocation.get("longitude")
     try:
-        lat = venueLocation.latitude
-        lon = venueLocation.longitude
+        #append this new artist to the total payload
+        payload = {
+            "venueName":venueDetails.get("venueName"),
+            "venueAddress":venueDetails.get("venueAddress"),
+            "lat":lat,
+            "lon":lon
+        }
+        r = PostPayload(objectId = venueId,payload = payload, apiEndpoint = "venue")
     except:
-        print("Venue scrape - cannot find coordinates")
-        lat = None
-        lon = None
-    venuePayload.append({
-        "source":"beat",
-        "sourceId":allVenue[i],
-        "venueName":venueDetails.get("venueName"),
-        "venueAddress":venueDetails.get("venueAddress"),
-        "lat":lat,
-        "lon":lon
-    })
+        print("Venue " + venueId + " post failed")
 
-with open('exampleData/venuePayload.json', 'w') as outfile:
-    json.dump(venuePayload, outfile)
+#now finally post the gigs
+for i in range(len(allGigs)):
+    thisGig = allGigs[i]
+    gigId = thisGig.get("gigLink")
+    print(gigId)
+    try:
+        payload = {
+            "gigGenre":thisGig.get("gigGenre"),
+            "gigDatetime":thisGig.get("gigDatetime"),
+            "venueId":thisGig.get("gigVenue"),
+            "headlineArtist":thisGig.get("gigHeadlineArtist"),
+            "supportArtist":thisGig.get("gigSupportArtist"),
+            "gigPrice":thisGig.get("gigPrice")
+        }
+        r = PostPayload(objectId = gigId,payload = payload, apiEndpoint = "gig")
+    except:
+        print("Gig " + gigId + " post failed")

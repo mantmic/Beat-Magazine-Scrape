@@ -1,3 +1,3 @@
 {
-	"dbConnection":"postgres://user:password@host:5432/dbname"
+	"dbConnection":"postgres://nroyjttspojdsy:fb0c0cc02b69a5682b6742aa980455a6f84b3cf23b224c5208550fd591571a30@ec2-54-217-250-0.eu-west-1.compute.amazonaws.com:5432/des8nlbqj25knj"
 }

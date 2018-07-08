@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 //register the routes
 var routes = require('./src/routes.js');
 routes(app);
-  
+
 app.listen(port);
 
-console.log('todo list RESTful API server started on: ' + port);
+console.log('BEAT RESTful API server started on: ' + port);

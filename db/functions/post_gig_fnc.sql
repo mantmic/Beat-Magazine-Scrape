@@ -6,6 +6,7 @@ drop function if exists beat.post_gig_fnc (
 	, p_venue_id 		varchar(200)
 	, p_headline_artist varchar(200)[]
 	, p_support_artist 	varchar(200)[]
+	, p_gig_price 		float
 )
 ;
 
@@ -26,6 +27,7 @@ $$
 		v_existing_artist 	json ;
 	 	v_remove_artists	varchar(200)[] ; --artists that had this gig that are now not part of the gig
 	 	v_new_artists 		varchar(200)[] ; --artists that previously didn't have this gig that now should have this gig
+	 	v_row 				record ;
 	begin 
 		select 
 			  gv.gig_date
@@ -53,10 +55,13 @@ $$
 			from 
 				( select 
 					unnest ( p_headline_artist )::varchar(200) as input_artist 
+				  union all 
+				  select 
+				  	unnest ( p_support_artist )::varchar(200) as input_artist
 				) ia 
 				full outer join 
 				( select 
-					json_array_elements ( v_existing_artist )::varchar(200) as existing_artist 
+					( json_array_elements ( v_existing_artist ) #>> '{}' )::varchar(200) as existing_artist 
 				) ea
 					on ia.input_artist = ea.existing_artist
 			) q
@@ -66,7 +71,7 @@ $$
 		;
 		--update the fields on the artists
 		--remove old artists
-		update 
+		/*update 
 			beat.artist 
 		set 
 			artist_gigs = array_remove ( artist_gigs, p_gig_id )
@@ -80,6 +85,17 @@ $$
 			artist_gigs = array_append ( artist_gigs, p_gig_id )
 		where
 			artist_id = any ( v_new_artists )
+		;
+		*/
+	 	--drop table if exists beat.test_tmp ;
+ 		--create table beat.test_tmp as select p_gig_id, v_remove_artists, v_new_artists, v_existing_artist, p_headline_artist ;
+		for v_row in select unnest ( v_remove_artists )::varchar(200) as artist_id loop 
+			perform beat.drop_artist_gig_fnc ( p_artist_id := v_row.artist_id, p_gig_id := p_gig_id ) ;
+		end loop 
+		;
+		for v_row in select unnest ( v_new_artists )::varchar(200) as artist_id loop  
+			perform beat.push_artist_gig_fnc ( p_artist_id := v_row.artist_id, p_gig_id := p_gig_id ) ;
+		end loop 
 		;
 		--remove the existing object
 		update 
@@ -116,3 +132,4 @@ $$
 $$ 
 language plpgsql ;
 ;
+
