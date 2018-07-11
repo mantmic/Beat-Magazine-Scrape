@@ -5,7 +5,7 @@ import requests
 import urllib.parse
 from time import sleep
 
-api_url = 'http://localhost:3000'
+api_url = 'https://beat-magazine-map.herokuapp.com'
 beat_url = "http://www.beat.com.au/"
 n_days = 7
 

@@ -50,10 +50,4 @@ Due to Heroku's 10,000 record limit the schema is a little strange. Gigs are sto
 ### API ###
 NodeJS API used for acccessing Postgres database. Operations that post data require an API key. Read operations are open to all.
 
-#### Dependencies ####
-
-
 ### Frontend ###
-
-
-#### Dependencies ####
