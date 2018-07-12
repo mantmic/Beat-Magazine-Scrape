@@ -7,7 +7,7 @@ from time import sleep
 
 api_url = 'https://beat-magazine-map.herokuapp.com'
 beat_url = "http://www.beat.com.au/"
-n_days = 7
+n_days = 0
 
 
 def PostPayload(objectId,payload, apiEndpoint):
