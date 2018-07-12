@@ -23,7 +23,7 @@ function getArtist(req,res,next){
 	artist_links 	as "artistLinks", \
 	artist_gigs 	as "artistGigs" \
 from  \
-	beat.get_artist_fnc ( $1 )', req.body.artistId || [])
+	beat.get_artist_fnc ( $1 )', [req.body.artistId || []])
     .then(function(data){
       res.status(200)
         .json({
@@ -48,7 +48,7 @@ function getVenue(req,res,next){
 	lon \
 from  \
 	beat.venue \
-where venue_id = any($1)', req.body.venueId || [])
+where venue_id = any($1)', [req.body.venueId || []])
     .then(function(data){
       res.status(200)
         .json({
