@@ -7,8 +7,6 @@ from time import sleep
 
 api_url = 'https://beat-magazine-map.herokuapp.com'
 beat_url = "http://www.beat.com.au/"
-n_days = 0
-
 
 def PostPayload(objectId,payload, apiEndpoint):
     retry_max = 10
@@ -56,21 +54,13 @@ beatScrape = importlib.import_module("beatScrape")
 
 #scrape a page of the gig guide to get gig links, gig genres
 
-#scrape between a date range
-start_date = datetime.datetime.now().date()
-end_date = start_date + datetime.timedelta(n_days)
-
-delta = end_date - start_date
-
-allGigs = []
-#maintain an overall list of venues, headline artists and support artists so those only get scraped once
-allHeadlineArtist = []
-allSupportArtist=[]
-allVenue=[]
-
-for j in range(delta.days + 1):
-    this_date = start_date + datetime.timedelta(j)
-    this_link = beat_url + "gig-guide/" + this_date.strftime("%Y-%m-%d")
+def scrapeBeatDay(date):
+    allGigs = []
+    #maintain an overall list of venues, headline artists and support artists so those only get scraped once
+    allHeadlineArtist = []
+    allSupportArtist=[]
+    allVenue=[]
+    this_link = beat_url + "gig-guide/" + date.strftime("%Y-%m-%d")
     print(this_link)
     gigGuideGigs = beatScrape.BeatGigGuideScrape(this_link)
     #loop through and get the gig details
@@ -89,121 +79,126 @@ for j in range(delta.days + 1):
         allHeadlineArtist.extend(gigDetails.get("gigHeadlineArtist"))
         allSupportArtist.extend(gigDetails.get("gigSupportArtist"))
         allVenue.append(gigDetails.get("gigVenue"))
-    allGigs.extend(gigGuideGigs)
-
-
-#reduce the all lists to unique values
-allHeadlineArtist = list(set(allHeadlineArtist))
-allSupportArtist = list(set(allSupportArtist))
-allVenue = list(set(allVenue))
-
-allHeadlineArtist = [x for x in allHeadlineArtist if x is not None]
-allSupportArtist = [x for x in allSupportArtist if x is not None]
-allVenue = [x for x in allVenue if x is not None]
-#perhaps should check which of these are new before scraping??
-
-#maybe not, could be a chance to update reference information
-#only artists who have gigs get updated then... hmmm..
-
-#loop through the headline artists
-for i in range(len(allHeadlineArtist)):
-#for i in range(50,60):
-    artistId = allHeadlineArtist[i]
-    artistLinks = {}
-    headlineArtistLink = beat_url + artistId
-    print(artistId)
-    beatArtist = beatScrape.BeatHeadlineArtistScrape(headlineArtistLink)
-    try:
-        bandcampArtist = bandcampScrape.BandcampBandSearch(beatArtist.get("artistName"))
-        if bandcampArtist.get("bandcampLink") != None:
-            artistLinks["bandcamp"] = {
-                "bandcampPage":bandcampArtist.get("bandcampLink"),
-                "bandcampTracks":{
+        allGigs.extend(gigGuideGigs)
+        #reduce the all lists to unique values
+    allHeadlineArtist = list(set(allHeadlineArtist))
+    allSupportArtist = list(set(allSupportArtist))
+    allVenue = list(set(allVenue))
+    
+    allHeadlineArtist = [x for x in allHeadlineArtist if x is not None]
+    allSupportArtist = [x for x in allSupportArtist if x is not None]
+    allVenue = [x for x in allVenue if x is not None]
+    #perhaps should check which of these are new before scraping??
+    
+    #maybe not, could be a chance to update reference information
+    #only artists who have gigs get updated then... hmmm..
+    
+    #loop through the headline artists
+    for i in range(len(allHeadlineArtist)):
+    #for i in range(50,60):
+        artistId = allHeadlineArtist[i]
+        artistLinks = {}
+        headlineArtistLink = beat_url + artistId
+        print(artistId)
+        beatArtist = beatScrape.BeatHeadlineArtistScrape(headlineArtistLink)
+        try:
+            bandcampArtist = bandcampScrape.BandcampBandSearch(beatArtist.get("artistName"))
+            if bandcampArtist.get("bandcampLink") != None:
+                artistLinks["bandcamp"] = {
+                    "bandcampPage":bandcampArtist.get("bandcampLink"),
                     "bandcampTracks":bandcampArtist.get("bandcampTracks")
                 }
+        except:
+            print("Bandcamp scrape failed")
+        try:
+            #append this new artist to the total payload
+            payload = {
+                "beatArtistType":"headline",
+                "artistName":beatArtist.get("artistName"),
+                "artistLinks":artistLinks
             }
-    except:
-        print("Bandcamp scrape failed")
-    try:
-        #append this new artist to the total payload
-        payload = {
-            "beatArtistType":"headline",
-            "artistName":beatArtist.get("artistName"),
-            "artistLinks":artistLinks
-        }
-        r = PostPayload(objectId = artistId,payload = payload, apiEndpoint = "artist")
-    except:
-        print("Artist " + artistId + " post failed")
-
-
-#loop through support artists
-for i in range(len(allSupportArtist)):
-#for i in range(50,60):
-    artistId = allSupportArtist[i]
-    artistLinks = {}
-    headlineArtistLink = beat_url + artistId
-    print(artistId)
-    beatArtist = beatScrape.BeatHeadlineArtistScrape(headlineArtistLink)
-    try:
-        bandcampArtist = bandcampScrape.BandcampBandSearch(beatArtist.get("artistName"))
-        if bandcampArtist.get("bandcampLink") != None:
-            artistLinks["bandcamp"] = {
-                "bandcampPage":bandcampArtist.get("bandcampLink"),
-                "bandcampTracks":{
+            PostPayload(objectId = artistId,payload = payload, apiEndpoint = "artist")
+        except:
+            print("Artist " + artistId + " post failed")
+    
+    
+    #loop through support artists
+    for i in range(len(allSupportArtist)):
+    #for i in range(50,60):
+        artistId = allSupportArtist[i]
+        artistLinks = {}
+        headlineArtistLink = beat_url + artistId
+        print(artistId)
+        beatArtist = beatScrape.BeatHeadlineArtistScrape(headlineArtistLink)
+        try:
+            bandcampArtist = bandcampScrape.BandcampBandSearch(beatArtist.get("artistName"))
+            if bandcampArtist.get("bandcampLink") != None:
+                artistLinks["bandcamp"] = {
+                    "bandcampPage":bandcampArtist.get("bandcampLink"),
                     "bandcampTracks":bandcampArtist.get("bandcampTracks")
                 }
+        except:
+            print("Bandcamp scrape failed")
+        try:
+            #append this new artist to the total payload
+            payload = {
+                "beatArtistType":"headline",
+                "artistName":beatArtist.get("artistName"),
+                "artistLinks":artistLinks
             }
-    except:
-        print("Bandcamp scrape failed")
-    try:
-        #append this new artist to the total payload
-        payload = {
-            "beatArtistType":"headline",
-            "artistName":beatArtist.get("artistName"),
-            "artistLinks":artistLinks
-        }
-        r = PostPayload(objectId = artistId,payload = payload, apiEndpoint = "artist")
-    except:
-        print("Artist " + artistId + " post failed")
+            PostPayload(objectId = artistId,payload = payload, apiEndpoint = "artist")
+        except:
+            print("Artist " + artistId + " post failed")
+    
+    
+    #loop through venues
+    for i in range(len(allVenue)):
+        venueId = allVenue[i]
+        venueUrl=beat_url + venueId
+        print(venueId)
+        venueDetails = beatScrape.BeatVenueScrape(venueUrl)
+        #try to use venueLocation
+        #otherwise try to use google
+        venueLocation = GetAddressLatLon(venueDetails.get("venueAddress"))
+        lat = venueLocation.get("latitude")
+        lon = venueLocation.get("longitude")
+        try:
+            #append this new artist to the total payload
+            payload = {
+                "venueName":venueDetails.get("venueName"),
+                "venueAddress":venueDetails.get("venueAddress"),
+                "lat":lat,
+                "lon":lon
+            }
+            PostPayload(objectId = venueId,payload = payload, apiEndpoint = "venue")
+        except:
+            print("Venue " + venueId + " post failed")
+    
+    #now finally post the gigs
+    for i in range(len(allGigs)):
+        thisGig = allGigs[i]
+        gigId = thisGig.get("gigLink")
+        print(gigId)
+        try:
+            payload = {
+                "gigGenre":thisGig.get("gigGenre"),
+                "gigDatetime":thisGig.get("gigDatetime"),
+                "venueId":thisGig.get("gigVenue"),
+                "headlineArtist":thisGig.get("gigHeadlineArtist"),
+                "supportArtist":thisGig.get("gigSupportArtist"),
+                "gigPrice":thisGig.get("gigPrice")
+            }
+            PostPayload(objectId = gigId,payload = payload, apiEndpoint = "gig")
+        except:
+            print("Gig " + gigId + " post failed")
 
+#scrape between a date range
+n_days = 14
+start_date = datetime.datetime.now().date()
+end_date = start_date + datetime.timedelta(n_days)
 
-#loop through venues
-for i in range(len(allVenue)):
-    venueId = allVenue[i]
-    venueUrl=beat_url + venueId
-    print(venueId)
-    venueDetails = beatScrape.BeatVenueScrape(venueUrl)
-    #try to use venueLocation
-    #otherwise try to use google
-    venueLocation = GetAddressLatLon(venueDetails.get("venueAddress"))
-    lat = venueLocation.get("latitude")
-    lon = venueLocation.get("longitude")
-    try:
-        #append this new artist to the total payload
-        payload = {
-            "venueName":venueDetails.get("venueName"),
-            "venueAddress":venueDetails.get("venueAddress"),
-            "lat":lat,
-            "lon":lon
-        }
-        r = PostPayload(objectId = venueId,payload = payload, apiEndpoint = "venue")
-    except:
-        print("Venue " + venueId + " post failed")
+delta = end_date - start_date
 
-#now finally post the gigs
-for i in range(len(allGigs)):
-    thisGig = allGigs[i]
-    gigId = thisGig.get("gigLink")
-    print(gigId)
-    try:
-        payload = {
-            "gigGenre":thisGig.get("gigGenre"),
-            "gigDatetime":thisGig.get("gigDatetime"),
-            "venueId":thisGig.get("gigVenue"),
-            "headlineArtist":thisGig.get("gigHeadlineArtist"),
-            "supportArtist":thisGig.get("gigSupportArtist"),
-            "gigPrice":thisGig.get("gigPrice")
-        }
-        r = PostPayload(objectId = gigId,payload = payload, apiEndpoint = "gig")
-    except:
-        print("Gig " + gigId + " post failed")
+for j in range(delta.days + 1):
+    this_date = start_date + datetime.timedelta(j)
+    scrapeBeatDay(this_date)
